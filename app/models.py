@@ -1,5 +1,5 @@
 from sqlmodel import Field, SQLModel, Relationship
-from typing import Optional
+from typing import List, Optional
 from pydantic import EmailStr   #insert at top of the file
 
 class Token(SQLModel):
@@ -10,6 +10,11 @@ class UserResponse(SQLModel):
     id: Optional[int]
     username:str
     email: EmailStr
+
+class UserCreate(SQLModel):
+    username: str
+    email: str
+    password: str
 
 class User(SQLModel, table=False):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -32,10 +37,17 @@ class TodoCategory(SQLModel, table=True):
 
 class Category(SQLModel, table=True):
     id: Optional[int] = Field(primary_key=True, default=None)
-    user_id: int = Field(foreign_key="regularuser.id")
+    user_id: int 
     text:str
 
-    todos:list['Todo'] = Relationship(back_populates="categories", link_model=TodoCategory)
+    todos:List["Todo"] = Relationship(back_populates="categories", link_model=TodoCategory)
+
+class CategoryCreate(SQLModel):
+    text: str
+
+class CategoryItem(SQLModel):
+    id: int
+    text: str 
 
 class Todo(SQLModel, table=True):
     id: Optional[int] = Field(primary_key=True, default=None)
@@ -44,10 +56,25 @@ class Todo(SQLModel, table=True):
     done: bool = False
 
     user: RegularUser = Relationship(back_populates="todos")
-    categories:list['Category'] = Relationship(back_populates="todos", link_model=TodoCategory)
+    categories:list['Category'] = Relationship(back_populates="todos")
 
     def toggle(self):
         self.done = not self.done
     
     def get_cat_list(self):
         return ', '.join([category.text for category in self.categories])
+
+    text:str
+
+class TodoResponse(SQLModel):
+    id: Optional[int] = Field(primary_key=True, default=None)
+    text:str
+    done: bool = False
+    categories: list[CategoryItem] = []
+
+class TodoUpdate(SQLModel):
+    text: Optional[str] = None
+    done: Optional[bool] = None
+
+class TodoCreate(SQLModel):
+    text:str
